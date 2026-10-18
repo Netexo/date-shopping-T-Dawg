@@ -66,48 +66,21 @@
 .day-cell.weekend { background: #ffffff02; }
 .day-number { display: inline-grid; place-items: center; align-self: flex-end; min-width: 28px; height: 28px; font-size: 15px; }
 .outside-month { color: #66666c; }
-.special-day {
-  position: relative;
-  background: #ff625c0c;
-  box-shadow: inset 0 0 0 1px #ff625c70;
-}
-.special-day .day-number { background: var(--planner-accent); color: #171719; border-radius: 50%; font-weight: 700; }
-.mobile-event { display: none; }
-.special-event {
-  border-left: 3px solid var(--planner-accent);
-  border-radius: 4px;
-  padding: 8px;
-  background: #b83e3938;
-  color: #ffb9b4;
-  text-align: left;
-  font-size: 12px;
-  line-height: 1.45;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-  animation: event-glow 3s ease-in-out infinite;
-}
-@keyframes event-glow { 50% { background: #b83e395c; } }
+.day-cell.available-day { background: #65bd8520; color: #c4ebd1; }
+.day-cell.unavailable-day, .outside-month { color: #66666c; }
+.planner-shell .day-cell:disabled { cursor: default; }
+.day-cell.selected-day { background: #65bd8545; box-shadow: inset 0 0 0 2px #8bd7a5; }
+.selected-day .day-number { background: #8bd7a5; color: #14251a; border-radius: 50%; font-weight: 700; }
+.month-navigation { display: flex; gap: 8px; }
+.month-navigation button { width: 36px; height: 36px; border: 1px solid #ffffff20; border-radius: 8px; background: #ffffff08; color: #f4f3f2; }
+.month-navigation button:disabled { opacity: .3; cursor: default; }
 @media (hover: hover) {
-  button.day-cell:hover { background: #ffffff0d; }
-  button.special-day:hover { background: #ff625c20; }
+  .available-day:not(:disabled):hover { background: #65bd8540; box-shadow: inset 0 0 0 1px #8bd7a5; }
+  .month-navigation button:not(:disabled):hover { background: #ffffff18; }
 }
-.selection-dialog {
-  color-scheme: dark;
-  width: min(520px, calc(100% - 32px));
-  max-height: calc(100svh - 32px);
-  overflow-y: auto;
-  margin: auto;
-  padding: 42px 32px 32px;
-  background: #242426;
-  color: #f4f3f2;
-  border: 1px solid #ffffff20;
-  border-radius: 20px;
-  box-shadow: 0 32px 100px #00000066;
-}
-.selection-dialog[open] { animation: modal-in 200ms ease-out; }
-.selection-dialog::backdrop { background: #08080bc2; backdrop-filter: blur(8px); }
-@keyframes modal-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
-.dialog-close { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: transparent; color: #a9a9af; font-size: 25px !important; }
+@keyframes modal-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.planner-content.centered:has(.month-calendar) { display: block; }
+.planner-content.centered > .month-calendar + .planner-step { margin: 40px auto 0; }
 .eyebrow { color: #ff938b; font-size: 12px; line-height: 1.6; letter-spacing: 0.025em; margin: 0 0 16px; }
 .selection-dialog h2 { margin: 0 0 20px; font-size: clamp(23px, 4vw, 29px); font-weight: 600; line-height: 1.3; letter-spacing: -0.03em; }
 .selection-dialog h2:focus, .planner-step h1:focus { outline: none; }
@@ -154,22 +127,6 @@
   .weekdays > span { padding-inline: 8px; }
   .day-cell { min-height: 90px; padding: 8px 4px; gap: 8px; }
   .day-number { min-width: 25px; height: 25px; font-size: 13px; }
-  .special-event { display: none; }
-  .mobile-event {
-    display: flex;
-    width: 100%;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 16px;
-    border: 0;
-    border-top: 1px solid #ff625c45;
-    background: #ff625c0c;
-    color: #ffb9b4;
-    text-align: left;
-    font-size: 12px !important;
-  }
-  .mobile-event-date { display: grid; gap: 2px; color: #ff938b; font-size: 20px; font-weight: 600; text-align: center; }
-  .mobile-event-date > span { font-size: 9px; letter-spacing: 0.06em; }
   .month-calendar { border-radius: 12px; }
   .selection-dialog { padding: 42px 24px 24px; }
 }
@@ -178,3 +135,22 @@
 }
 
 .planner-shop-link { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+
+.selection-dialog {
+  color-scheme: dark;
+  width: min(520px, calc(100% - 32px));
+  max-height: calc(100svh - 32px);
+  overflow-y: auto;
+  margin: auto;
+  padding: 42px 32px 32px;
+  background: #242426;
+  color: #f4f3f2;
+  border: 1px solid #ffffff20;
+  border-radius: 20px;
+  box-shadow: 0 32px 100px #00000066;
+}
+.selection-dialog::backdrop { background: #08080ba6; }
+.selection-dialog-content { animation: modal-in 200ms ease-out; }
+@media (max-width: 760px) {
+  .selection-dialog { padding: 36px 24px 24px; }
+}

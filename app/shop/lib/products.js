@@ -8,7 +8,7 @@ export const categories = [
 ];
 
 export const products = [
-  { id: "badminton", name: "Paddel (Badminton)", category: "activities", points: 25, icon: "racket" },
+  { id: "henna-tattoo", name: "Henna Tattoo", category: "activities", points: 20, icon: "henna" },
   { id: "walk", name: "Spaziergang", category: "activities", points: 5, icon: "walk" },
   { id: "bowling", name: "Bowling", category: "activities", points: 30, icon: "bowling" },
   { id: "arcade", name: "Arcade Halle", category: "activities", points: 25, icon: "arcade" },
@@ -22,11 +22,11 @@ export const products = [
     { id: "italian", name: "Italiener", points: 35 },
     { id: "all-you-can-eat", name: "All you can eat", points: 40 },
   ] },
-  { id: "pickup-service", name: "Abholservice", category: "extras", points: 15, icon: "car" },
   { id: "cards", name: "Kartendeck", category: "extras", points: 5, icon: "cards" },
   { id: "walking-beer", name: "Wegbier", category: "extras", points: 10, icon: "bottle" },
   { id: "whistle", name: "Trillerpfeife", category: "extras", points: 5, icon: "whistle" },
-  { id: "megaphone", name: "Megafon", category: "extras", points: 10, icon: "megaphone" },
+  { id: "fidget-spinner", name: "Fidget Spinner", category: "extras", points: 5, icon: "spinner" },
+  { id: "jojo", name: "Jojo", category: "extras", points: 5, icon: "jojo" },
   { id: "unicorn", name: "Einhorn", category: "extras", points: 15, icon: "unicorn" },
   { id: "mystery-box", name: "Mystery Box", category: "extras", points: 25, icon: "gift" },
   { id: "interview", name: "5 Fragen", category: "extras", points: 5, icon: "interview" },

@@ -45,3 +45,9 @@
   .admin-order header { flex-direction: column; gap: 12px; }
   .admin-order li { font-size: 12px; gap: 12px; }
 }
+.admin-sections { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 32px; }
+.admin-friendbook summary { cursor: pointer; font-size: 17px; line-height: 1.6; overflow-wrap: anywhere; }
+.admin-friendbook[open] summary { margin-bottom: 24px; }
+.admin-friendbook dd { white-space: pre-wrap; overflow-wrap: anywhere; }
+.admin-friendbook-answer { margin-top: 24px; }
+.admin-friendbook-answer p { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.7; }

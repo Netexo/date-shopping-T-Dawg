@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { formatDate } from "../lib/planner";
 
-export default function TimePicker({ day, onConfirm }) {
+export default function TimePicker({ date, onConfirm }) {
   const [hour, setHour] = useState("");
   const [minute, setMinute] = useState("");
 
@@ -12,7 +12,7 @@ export default function TimePicker({ day, onConfirm }) {
 
   return (
     <section className="planner-step" aria-labelledby="time-heading">
-      <p className="eyebrow">{formatDate(day)}</p>
+      <p className="eyebrow">{formatDate(date)}</p>
       <h1 id="time-heading" tabIndex={-1}>And what time<br />works for you?</h1>
       <form onSubmit={submit}>
         <fieldset className="time-fields">

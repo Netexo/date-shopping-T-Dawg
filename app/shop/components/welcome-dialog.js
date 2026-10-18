@@ -50,7 +50,7 @@ export default function WelcomeDialog() {
       onKeyDown={(event) => { if (event.key === "Escape") event.preventDefault(); }}
       onCancel={(event) => event.preventDefault()}
     >
-      <h2 id="welcome-title">Hey Amelie!</h2>
+      <h2 id="welcome-title">Hey Britta!</h2>
       <p id="welcome-description">Kurze Info: Du hast 100 Credits und kannst dir damit verschiedene Aktivitäten aussuchen. Oben rechts siehst du immer deinen aktuellen Kontostand. Wenn du fertig bist, geh einfach auf Checkout.</p>
       <button type="button" className="welcome-confirm" onClick={dismiss}>Alles klar!</button>
     </dialog>

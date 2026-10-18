@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { createOrderBlobStore, ORDER_BLOB_PREFIX } from "../app/lib/order-blob.js";
 
 const token = "fixture-server-only-token";
-const input = (patch = {}) => ({ idempotencyKey: randomUUID(), date: "2026-10-27", time: "18:30", entries: [{ id: "pickup-service" }, { id: "restaurant", variantId: "greek" }], ...patch });
+const input = (patch = {}) => ({ location: "Frankfurt", idempotencyKey: randomUUID(), date: "2026-10-27", time: "18:30", entries: [{ id: "pub" }, { id: "restaurant", variantId: "greek" }], ...patch });
 function fixture(pageSize = 1000) {
   const files = new Map();
   const calls = [];
@@ -40,13 +40,24 @@ test("Blob configuration is required; an empty store lists no orders and writes 
   assert.equal(f.files.size, 0);
 });
 
+test("admin order listing preserves the names and prices of the new extras", async () => {
+  const f = fixture();
+  await f.store().create(input({entries:[{id:"fidget-spinner"},{id:"jojo"}]}));
+  const {orders} = await f.store().list();
+  assert.deepEqual(orders[0].items,[
+    {id:"fidget-spinner",name:"Fidget Spinner",credits:5},
+    {id:"jojo",name:"Jojo",credits:5},
+  ]);
+  assert.equal(orders[0].remaining,90);
+});
+
 test("one private JSON blob stores catalog prices and restaurant choice, with deterministic name and no overwriting", async () => {
   const f = fixture(); const order = input();
   const receipt = await f.store().create(order);
   assert.equal(receipt.spent, 50); assert.equal(receipt.remaining, 50);
   const path = `${ORDER_BLOB_PREFIX}${order.idempotencyKey}.json`;
   const saved = JSON.parse(f.files.get(path));
-  assert.equal(saved.items[0].name, "Abholservice"); assert.equal(saved.items[0].credits, 15);
+  assert.equal(saved.items[0].name, "Kneipe"); assert.equal(saved.items[0].credits, 15);
   assert.equal(saved.items[1].name, "Restaurant – Grieche");
   assert.equal(receipt.id, saved.id); assert.equal(saved.status, "completed");
   for (const call of f.calls) {
@@ -104,7 +115,7 @@ test("failed uploads never confirm success, and retrying the same key works afte
 
 test("validation rejects invalid prices, removed products and more than 100 credits before SDK access", async () => {
   const f = fixture();
-  for (const entries of [[{ id: "gym" }], [{ id: "bar", credits: 0 }], [{ id: "badminton" }, { id: "arcade" }, { id: "bowling" }, { id: "bar" }, { id: "walk" }]]) {
+  for (const entries of [[{ id: "gym" }], [{ id: "bar", credits: 0 }], [{ id: "henna-tattoo" }, { id: "arcade" }, { id: "bowling" }, { id: "bar" }, { id: "walking-beer" }]]) {
     await assert.rejects(f.store().create(input({ entries })));
   }
   assert.equal(f.calls.length, 0);
@@ -140,4 +151,25 @@ test("read, list, corrupted content and broken cursor errors cannot masquerade a
   await assert.rejects(h.store().create(input())); assert.equal(h.files.size, 0);
   const j = fixture(); j.api.list = async () => ({ blobs: [], hasMore: true, cursor: "same" });
   await assert.rejects(j.store().list());
+});
+
+test("location persists into receipts and admin listing and changes retry identity", async () => {
+  const f = fixture();
+  const order = input({location:"Mainz"});
+  assert.equal((await f.store().create(order)).location,"Mainz");
+  assert.equal((await f.store().list()).orders[0].location,"Mainz");
+  await assert.rejects(f.store().create({...order,location:"Frankfurt"}), /anderen Auswahl/);
+});
+test("historical records without location remain readable", async () => {
+  const f = fixture();
+  const order = input();
+  await f.store().create(order);
+  const path = `${ORDER_BLOB_PREFIX}${order.idempotencyKey}.json`;
+  const saved = JSON.parse(f.files.get(path));
+  delete saved.location;
+  f.files.set(path,JSON.stringify(saved));
+  const listed = (await f.store().list()).orders;
+  assert.equal(listed.length,1);
+  assert.equal(listed[0].location,undefined);
+  assert.equal(listed[0].items.length,2);
 });

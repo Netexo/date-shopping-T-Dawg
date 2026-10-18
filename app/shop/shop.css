@@ -209,6 +209,15 @@
   box-shadow: 0 20px 80px #00000020;
 }
 .shop-welcome::backdrop { background: #0005; }
+.restaurant-dialog[open] { animation: restaurant-dialog-open 180ms ease-out; }
+.restaurant-dialog ol { margin: 0 0 24px; padding-left: 20px; font-size: 14px; line-height: 1.7; }
+.restaurant-dialog li + li { margin-top: 10px; }
+.restaurant-dialog-actions { display: grid; gap: 12px; padding-top: 20px; border-top: 1px solid #e7e7e7; }
+.restaurant-dialog .restaurant-keep { background: #fff; color: #111; }
+.restaurant-dialog .restaurant-keep:hover { background: #f4f4f4; }
+.restaurant-dialog button:disabled { opacity: .45; cursor: not-allowed; }
+@keyframes restaurant-dialog-open { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .restaurant-dialog[open] { animation: none; } }
 .shop-welcome h2 { margin: 0 0 16px; font-size: 25px; font-weight: 600; letter-spacing: -0.04em; }
 .shop-welcome p { margin: 0 0 28px; font-size: 14px; line-height: 1.7; }
 .welcome-confirm { width: 100%; min-height: 46px; padding: 12px 20px; border: 1px solid #111; border-radius: 6px; background: #111; color: #fff; font-size: 13px !important; transition: background-color 160ms ease; }

@@ -10,9 +10,9 @@ const summary = (state) => cartSummary(state.entries);
 
 test("catalog contains only the 16 product cards in the three requested categories", () => {
   assert.deepEqual(products.filter((p) => !p.variants).map(({ name, points }) => [name, points]), [
-    ["Paddel (Badminton)",25], ["Spaziergang",5], ["Bowling",30],
+    ["Henna Tattoo",20], ["Spaziergang",5], ["Bowling",30],
     ["Arcade Halle",25], ["Barsport (Kicker / Billard / Dart)",20], ["Bar",20], ["Kneipe",15],
-    ["Abholservice",15], ["Kartendeck",5], ["Wegbier",10], ["Trillerpfeife",5], ["Megafon",10], ["Einhorn",15], ["Mystery Box",25], ["5 Fragen",5],
+    ["Kartendeck",5], ["Wegbier",10], ["Trillerpfeife",5], ["Fidget Spinner",5], ["Jojo",5], ["Einhorn",15], ["Mystery Box",25], ["5 Fragen",5],
   ]);
   assert.deepEqual(products.find((p) => p.id === "restaurant").variants.map(({name,points}) => [name,points]), [
     ["Asiate",35], ["Fast Food",20], ["Grieche",35], ["Italiener",35], ["All you can eat",40],
@@ -59,27 +59,27 @@ test("switching variants charges only the difference and refunds cheaper choices
 });
 
 test("switching uses the refunded current price and refuses unaffordable variants atomically", () => {
-  let state=add(add(add(empty(),"badminton"),"arcade"),"bowling");
+  let state=add(add(add(empty(),"henna-tattoo"),"arcade"),"bowling");
   state=add(state,"restaurant","fast-food");
-  assert.equal(summary(state).remaining,0);
+  assert.equal(summary(state).remaining,5);
   assert.deepEqual(add(state,"restaurant","asian"),state);
-  assert.deepEqual(add(state,"cards"),state);
-  state=cartReducer(state,{type:"remove",id:"badminton"});
+  assert.deepEqual(add(state,"walking-beer"),state);
+  state=cartReducer(state,{type:"remove",id:"henna-tattoo"});
   state=add(state,"restaurant","all-you-can-eat");
   assert.equal(summary(state).remaining,5);
   assert.equal(summary(state).count,3);
 });
 
 test("old carts and malformed values are sanitized using current catalog prices", () => {
-  for (const invalid of [null,{},"badminton",100]) assert.deepEqual(restoreCart(invalid),[]);
+  for (const invalid of [null,{},"henna-tattoo",100]) assert.deepEqual(restoreCart(invalid),[]);
   assert.deepEqual(restoreCart(["padel-match","mini-golf","picnic","cocktail-night","coffee-date","dinner-date","uber-ride","personal-driver","flowers","mystery-surprise"]),[]);
   const entries=restoreCart([
-    {id:"badminton",points:1}, {id:"badminton"}, {id:"restaurant",variantId:"asian",points:0},
+    {id:"henna-tattoo",points:1}, {id:"henna-tattoo"}, {id:"restaurant",variantId:"asian",points:0},
     {id:"restaurant",variantId:"fast-food"}, {id:"__proto__"}, {id:"restaurant",variantId:"invalid"},
     {id:"bowling"},{id:"gym"},{id:"walking-beer"},
   ]);
-  assert.deepEqual(entries,[{id:"badminton"},{id:"restaurant",variantId:"asian"},{id:"bowling"},{id:"walking-beer"}]);
-  assert.equal(cartSummary(entries).remaining,0);
+  assert.deepEqual(entries,[{id:"henna-tattoo"},{id:"restaurant",variantId:"asian"},{id:"bowling"},{id:"walking-beer"}]);
+  assert.equal(cartSummary(entries).remaining,5);
   const restored=cartReducer(initialCart,{type:"restore",entries:JSON.parse(JSON.stringify(entries))});
   assert.deepEqual(restored.entries,entries);
   assert.equal(restored.ready,true);
@@ -98,9 +98,19 @@ test("appointment dates and times are still preserved", () => {
   assert.equal(readAppointment("2026-02-30","12:00"),null);
 });
 
-test("saved Gym entries are removed without losing valid items or charging their old price", () => {
+test("saved Gym and pickup service entries are removed without losing valid items or charging their old price", () => {
   const entries=restoreCart(["gym",{id:"gym"},{id:"pickup-service",points:1},{id:"walk"}]);
-  assert.deepEqual(entries,[{id:"pickup-service"},{id:"walk"}]);
-  assert.equal(cartSummary(entries).spent,20);
-  assert.equal(cartSummary(entries).remaining,80);
+  assert.deepEqual(entries,[{id:"walk"}]);
+  assert.equal(cartSummary(entries).spent,5);
+  assert.equal(cartSummary(entries).remaining,95);
+});
+
+test("removed badminton is dropped from saved carts", () => {
+  assert.deepEqual(restoreCart([{id:"badminton"},{id:"henna-tattoo"}]),[{id:"henna-tattoo"}]);
+});
+
+test("removed megaphone is dropped without losing the new extras", () => {
+  const entries = restoreCart([{id:"megaphone"},{id:"fidget-spinner"},{id:"jojo"}]);
+  assert.deepEqual(entries,[{id:"fidget-spinner"},{id:"jojo"}]);
+  assert.equal(cartSummary(entries).remaining,90);
 });

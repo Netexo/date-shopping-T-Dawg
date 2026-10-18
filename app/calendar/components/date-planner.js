@@ -2,41 +2,37 @@
 
 import Link from "next/link";
 import { useEffect, useReducer, useRef } from "react";
-import { formatDate, initialSelection, plannerReducer, YEAR, MONTH } from "../lib/planner";
+import { useRouter } from "next/navigation";
+import { initialSelection, plannerReducer } from "../lib/planner";
 import MonthCalendar from "./month-calendar";
-import SelectionDialog from "./selection-dialog";
 import TimePicker from "./time-picker";
+import SelectionDialog from "./selection-dialog";
 
 export default function DatePlanner() {
   const [selection, dispatch] = useReducer(plannerReducer, initialSelection);
   const contentRef = useRef(null);
+  const router = useRouter();
 
   useEffect(() => {
-    if (selection.phase === "time" || selection.phase === "confirmed") {
-      contentRef.current.querySelector("h1")?.focus();
+    if (selection.phase === "confirmed") {
+      router.replace(`/friendbook?${new URLSearchParams({ date: selection.date, time: selection.time })}`);
     }
-  }, [selection.phase]);
+    if (selection.phase === "time") {
+      contentRef.current.querySelector(".planner-step h1")?.focus();
+    }
+  }, [selection.phase, selection.date, selection.time, router]);
 
   return (
     <main className="planner-shell">
-      <nav className="planner-nav" aria-label="Hauptnavigation"><Link href="/">Date Shopping</Link><span>Ein Date beginnt mit einem Datum.</span></nav>
+      <nav className="planner-nav" aria-label="Hauptnavigation"><Link href="/">Date Shopping</Link><Link href="/location">Standort ändern</Link></nav>
       <div className={`planner-content${["time", "confirmed"].includes(selection.phase) ? " centered" : ""}`} ref={contentRef}>
-        {["calendar", "persuade"].includes(selection.phase) && (
-          <MonthCalendar onSelect={(day) => dispatch({ type: "select", day })} />
+        {(["calendar", "prompt", "time"].includes(selection.phase)) && (
+          <MonthCalendar month={selection.month} selectedDate={selection.date} onMonthChange={(month) => dispatch({ type: "month", month })} onSelect={(date) => dispatch({ type: "select", date })} />
         )}
-        {selection.phase === "persuade" && <SelectionDialog step={selection.promptIndex} pendingDay={selection.pendingDay} onSwitch={() => dispatch({ type: "switch" })} onKeep={() => dispatch({ type: "keep" })} onCancel={() => dispatch({ type: "cancel" })} />}
-        {selection.phase === "time" && <TimePicker day={selection.day} onConfirm={(time) => dispatch({ type: "confirm", time })} />}
-        {selection.phase === "confirmed" && <section className="planner-step confirmation" aria-labelledby="confirmation-heading">
-          <h1 id="confirmation-heading" tabIndex={-1}>It&apos;s a date!</h1>
-          <p className="confirmed-date">{formatDate(selection.day)}<br /><span>{selection.time} Uhr</span></p>
-          <Link className="planner-button planner-shop-link" href={{
-            pathname: "/shop",
-            query: {
-              date: `${YEAR}-${String(MONTH + 1).padStart(2, "0")}-${String(selection.day).padStart(2, "0")}`,
-              time: selection.time,
-            },
-          }}>Continue Shopping</Link>
-        </section>}
+        {selection.phase === "prompt" && <SelectionDialog step={selection.promptIndex} date={selection.pendingDate}
+          onEarlier={() => dispatch({ type: "earlier" })} onKeep={() => dispatch({ type: "keep" })} />}
+        {selection.phase === "time" && <TimePicker date={selection.date} onConfirm={(time) => dispatch({ type: "confirm", time })} />}
+        {selection.phase === "confirmed" && <p role="status">Dein Freundesbuch wird geöffnet.</p>}
       </div>
     </main>
   );

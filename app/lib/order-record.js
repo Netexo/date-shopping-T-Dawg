@@ -1,9 +1,12 @@
-import { readAppointment } from "../shop/lib/appointment.js";
+import { parseAppointment } from "../shop/lib/appointment.js";
+
+import { validLocation } from "./location.js";
 
 export function validOrderRecord(order) {
   if (!order || typeof order.id !== "string" || typeof order.idempotencyKey !== "string"
     || typeof order.requestHash !== "string" || order.status !== "completed"
-    || !readAppointment(order.date, order.time) || !Number.isFinite(Date.parse(order.created_at))
+    || (order.location !== undefined && !validLocation(order.location))
+    || !parseAppointment(order.date, order.time) || !Number.isFinite(Date.parse(order.created_at))
     || !Number.isInteger(order.spent) || order.spent < 1 || order.spent > 100 || order.remaining !== 100 - order.spent
     || !Array.isArray(order.items) || !order.items.length) return false;
   const ids = new Set();
@@ -15,10 +18,10 @@ export function validOrderRecord(order) {
   }) && order.items.reduce((total, item) => total + item.credits, 0) === order.spent;
 }
 
-export function publicOrder({ id, date, time, items, spent, remaining, created_at, status }) {
-  return { id, date, time, items, spent, remaining, created_at, status };
+export function publicOrder({ id, date, time, items, spent, remaining, created_at, status, location }) {
+  return { id, date, time, items, spent, remaining, created_at, status, ...(location ? { location } : {}) };
 }
 
-export function orderReceipt({ id, date, time, spent, remaining, created_at, status }) {
-  return { id, date, time, spent, remaining, created_at, status };
+export function orderReceipt({ id, date, time, spent, remaining, created_at, status, location }) {
+  return { id, date, time, spent, remaining, created_at, status, ...(location ? { location } : {}) };
 }

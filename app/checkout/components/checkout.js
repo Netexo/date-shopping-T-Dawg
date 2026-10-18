@@ -7,6 +7,8 @@ import useCart from "../../shop/components/use-cart";
 import { readAppointment } from "../../shop/lib/appointment";
 import { checkoutDraft, completeOrder, findCompletedOrder } from "../lib/order";
 
+import { loadLocation } from "../../lib/location";
+
 const initialStatus = { signature: null, ready: false, order: null, error: "", submitting: false };
 
 export default function Checkout() {
@@ -14,7 +16,11 @@ export default function Checkout() {
   const appointment = readAppointment(params.get("date"), params.get("time"));
   const cart = useCart();
   const entries = cart.items.map(({ id, variantId }) => variantId ? { id, variantId } : { id });
-  const draft = checkoutDraft(appointment, entries);
+  const [location, setLocation] = useReducer((_, value) => value, "");
+  useEffect(() => {
+    try { setLocation(loadLocation(localStorage)); } catch { /* Show the location selection link below. */ }
+  }, []);
+  const draft = checkoutDraft(appointment, entries, location);
   const signature = draft?.signature || null;
   const [status, updateStatus] = useReducer((state, patch) => ({ ...state, ...patch }), initialStatus);
   const submittingRef = useRef(false);
@@ -25,7 +31,7 @@ export default function Checkout() {
     if (!cart.ready) return;
     try {
       const savedSelection = signature ? JSON.parse(signature) : null;
-      const currentDraft = savedSelection ? checkoutDraft({ date: savedSelection[0], time: savedSelection[1] }, savedSelection[2]) : null;
+      const currentDraft = savedSelection ? checkoutDraft({ date: savedSelection[0], time: savedSelection[1] }, savedSelection[2], savedSelection[3]) : null;
       const order = findCompletedOrder(localStorage, currentDraft);
       updateStatus({ signature, ready: true, order, error: "" });
     } catch {
@@ -61,13 +67,14 @@ export default function Checkout() {
           <div className="checkout-success">
             <h1 id="checkout-title" ref={confirmationRef} tabIndex={-1}>It&apos;s a Date!</h1>
             <p>Deine Bestellung wurde erfolgreich aufgegeben.</p>
-            <p className="checkout-success-date">{status.order.appointment.label}</p>
+            <p className="checkout-success-date">{status.order.location} · {status.order.appointment.label}</p>
           </div>
         ) : (
           <>
             <h1 id="checkout-title">YOUR DATE SUMMARY</h1>
             <section className="checkout-section" aria-labelledby="date-time-title">
-              <h2 id="date-time-title">Date &amp; Time</h2>
+              <h2 id="date-time-title">Location, Date &amp; Time</h2>
+              {location ? <p className="checkout-appointment">{location}</p> : <p className="checkout-missing">Bitte <Link href="/location">wähle zuerst einen Standort</Link>.</p>}
               {appointment ? <p className="checkout-appointment">{appointment.label}</p> : <p className="checkout-missing">Bitte wähle zuerst ein Datum und eine Uhrzeit im Terminplaner aus.</p>}
             </section>
             <section className="checkout-section" aria-labelledby="items-title">

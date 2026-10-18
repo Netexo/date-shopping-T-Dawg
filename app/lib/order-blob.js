@@ -31,7 +31,7 @@ export function createOrderBlobStore({ put, get, list }, token) {
   return {
     async create(input) {
       const validated = validateOrder(input);
-      const canonical = { date: validated.date, time: validated.time,
+      const canonical = { date: validated.date, time: validated.time, location: validated.location,
         entries: validated.items.map(({ id, variantId }) => variantId ? { id, variantId } : { id }).sort((a, b) => a.id.localeCompare(b.id)) };
       const requestHash = createHash("sha256").update(JSON.stringify(canonical)).digest("hex");
       const pathname = `${ORDER_BLOB_PREFIX}${validated.idempotencyKey}.json`;
