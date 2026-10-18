@@ -2,12 +2,11 @@ import "server-only";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { BackendError } from "../backend-error";
+import { readAdminPassword } from "../admin-config";
 import { ADMIN_COOKIE, createAdminSession, SESSION_SECONDS, verifyAdminSession } from "../admin-session";
 
 export function adminPassword() {
-  const password = process.env.ADMIN_PASSWORD;
-  if (!password || password.length < 16 || password.length > 1024) throw new BackendError("Bitte richte ADMIN_PASSWORD mit mindestens 16 Zeichen in .env.local ein und starte den Server neu.");
-  return password;
+  return readAdminPassword();
 }
 
 function cookieOptions(request) {

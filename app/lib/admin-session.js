@@ -7,17 +7,17 @@ const signature = (payload, password) => createHmac("sha256", digest(`date-shopp
 
 export function passwordMatches(input, password) {
   return typeof input === "string" && input.length <= 1024 && typeof password === "string"
-    && password.length >= 16 && timingSafeEqual(digest(input), digest(password));
+    && password.length >= 16 && password.length <= 1024 && timingSafeEqual(digest(input), digest(password));
 }
 
 export function createAdminSession(password, now = Date.now()) {
-  if (typeof password !== "string" || password.length < 16) throw new Error("Admin password not configured");
+  if (typeof password !== "string" || password.length < 16 || password.length > 1024) throw new Error("Admin password not configured");
   const payload = Buffer.from(JSON.stringify({ exp: Math.floor(now / 1000) + SESSION_SECONDS, nonce: randomBytes(16).toString("hex") })).toString("base64url");
   return `${payload}.${signature(payload, password)}`;
 }
 
 export function verifyAdminSession(token, password, now = Date.now()) {
-  if (typeof token !== "string" || token.length > 1024 || typeof password !== "string" || password.length < 16) return false;
+  if (typeof token !== "string" || token.length > 1024 || typeof password !== "string" || password.length < 16 || password.length > 1024) return false;
   const parts = token.split(".");
   if (parts.length !== 2) return false;
   const [payload, signed] = parts;
