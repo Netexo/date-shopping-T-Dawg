@@ -49,3 +49,9 @@ test("provider failures cannot create a session or echo provider secrets", async
   await assert.rejects(authenticateCode("",{},config),error=>error.status===400);
   await assert.rejects(authenticateCode("code",{},config,async()=>Response.json({})),error=>error.status===401);
 });
+
+test("fixed host check accepts normalized internal request URLs without trusting forwarded hosts", async () => {
+  const {matchesAuthHost} = await import("../app/lib/admin-oauth.js");
+  assert.equal(matchesAuthHost(new Request("http://localhost/api/admin/callback",{headers:{host:"example.test"}}),config),true);
+  assert.equal(matchesAuthHost(new Request("http://localhost/api/admin/callback",{headers:{host:"attacker.test","x-forwarded-host":"example.test"}}),config),false);
+});

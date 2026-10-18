@@ -11,6 +11,11 @@ export function oauthConfig(environment = process.env) {
   if (url.origin !== origin || (url.protocol !== "https:" && !(url.protocol === "http:" && ["localhost","127.0.0.1"].includes(url.hostname)))) throw new BackendError("ADMIN_AUTH_ORIGIN muss eine HTTPS-Adresse ohne Pfad sein (lokal ist HTTP erlaubt).");
   return {clientId,clientSecret,userId,secret,origin,callback:`${origin}/api/admin/callback`,secure:url.protocol === "https:"};
 }
+// Next.js may normalize request.url to an internal hostname. Compare the incoming
+// Host to the configured fixed host; never construct OAuth redirects from headers.
+export function matchesAuthHost(request,config) {
+  return request.headers.get("host")?.toLowerCase() === new URL(config.origin).host.toLowerCase();
+}
 const mac = (value,config) => createHmac("sha256",config.secret).update(`admin-oauth-v1\0${value}`).digest("base64url");
 const same = (a,b) => typeof a === "string" && typeof b === "string" && a.length === b.length && timingSafeEqual(Buffer.from(a),Buffer.from(b));
 const sessionKey = config => createHmac("sha256",config.secret).update(JSON.stringify(["github-admin-v1",config.clientId,config.userId,config.origin])).digest("hex");
