@@ -66,7 +66,7 @@ export default function Friendbook({ create = false }) {
           <Questions editable answers={state.entry.answers} onChange={(key,value) => change("answers",key,value)} />
           </fieldset>
           {state.error && <p className="friendbook-error" role="alert">{state.error}</p>}
-          <p className="friendbook-privacy">Deine Angaben werden privat gespeichert, um unser Treffen zu planen. Sie sind nur für die Verwaltung des Treffens einsehbar.</p>
+          <p className="friendbook-privacy">Deine Angaben werden für die Planung unseres Treffens gespeichert und in der Übersicht unter /admin angezeigt.</p>
           <div className="friendbook-actions"><button className="friendbook-button" type="submit" disabled={state.saving}>{state.saving ? "Wird gespeichert …" : "Eintrag abschließen"}</button><Link className="friendbook-text-button" href={href("/friendbook")}>Zurück zu meinem Eintrag</Link></div>
         </form> : <>
           <Profile values={myProfile} photo={photo} /><Questions />

@@ -1,4 +1,5 @@
 # Vercel Blob
 
 Die aktuelle Speicheranleitung steht in [blob-storage.md](blob-storage.md).
-Der Admin-Bereich wurde entfernt. Die privaten Blob-Dateien bleiben erhalten.
+Die Übersicht unter `/admin` zeigt gespeicherte Daten ohne Anmeldung.
+Die Blob-Dateien bleiben privat; die Übersicht liest sie serverseitig.

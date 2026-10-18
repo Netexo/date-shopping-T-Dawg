@@ -1,0 +1,25 @@
+.admin-page { min-height: 100svh; background: #fff; color: #181818; }
+.admin-header { display: flex; justify-content: space-between; padding: 28px 32px; border-bottom: 1px solid #e7e7e7; }
+.admin-page a { color: inherit; text-underline-offset: 4px; }
+.admin-header a:first-child { font-weight: 600; text-decoration: none; }
+.admin-content { max-width: 1000px; padding: 48px 24px; margin: auto; }
+.admin-content h1 { font-size: 32px; font-weight: 500; letter-spacing: -.04em; margin: 0 0 24px; }
+.admin-content h2 { font-size: 24px; font-weight: 500; }
+.admin-sections { display: flex; flex-wrap: wrap; gap: 24px; margin-bottom: 40px; }
+.admin-content > section + section { margin-top: 48px; }
+.admin-card { padding: 24px; margin-top: 20px; border: 1px solid #e7e7e7; }
+.admin-card summary { cursor: pointer; font-size: 17px; line-height: 1.6; overflow-wrap: anywhere; }
+.admin-card[open] summary { margin-bottom: 24px; }
+.admin-card h3 { font-size: 15px; font-weight: 500; margin-top: 24px; }
+.admin-card p { font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
+.admin-card dl { margin: 24px 0; }
+.admin-card dl > div, .admin-items li { display: flex; justify-content: space-between; gap: 24px; padding: 12px 0; border-bottom: 1px solid #eee; font-size: 13px; line-height: 1.6; }
+.admin-card dt { color: #707070; }
+.admin-card dd { margin: 0; text-align: right; white-space: pre-wrap; overflow-wrap: anywhere; }
+.admin-items { padding: 0; list-style: none; }
+.admin-items li span:last-child { white-space: nowrap; }
+.admin-answer p { white-space: pre-wrap; }
+.admin-linked { border-top: 1px solid #e7e7e7; margin-top: 24px; }
+.admin-card .admin-id { color: #777; font: 11px monospace; overflow-wrap: anywhere; }
+.admin-page :focus-visible { outline: 2px solid #111; outline-offset: 4px; }
+@media (max-width: 600px) { .admin-header { padding: 24px 20px; } .admin-content { padding: 32px 20px; } .admin-card { padding: 20px; } }

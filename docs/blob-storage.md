@@ -31,9 +31,9 @@ Beide Speicherwege verwenden feste Dateinamen pro Idempotenzkennung sowie
 Wiederholungsversuche verwenden dieselbe Kennung. Bestehende Dateien werden
 weder gelöscht noch überschrieben.
 
-Der Admin-Bereich und die zugehörigen GET-Abfragen wurden entfernt.
-Die API-Routen bieten nur noch das Speichern per POST an; gespeicherte Dateien
-werden nicht über eine öffentliche Listen-API ausgegeben.
+Die Übersicht unter `/admin` zeigt Bestellungen und Freundesbuch-Einträge ohne
+Anmeldung. Sie lädt die Dateien serverseitig aus dem privaten Blob Store.
+Die API-Routen bieten weiterhin nur das Speichern per POST an.
 
 Die dauerhaften Daten liegen im Blob Store, nicht im Dateisystem einer Function.
 Neue Serverinstanzen lesen denselben Store erneut. Bei einem Store-Wechsel
