@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { validateOrder } from "./order-validation.js";
+import { productsById } from "../shop/lib/products.js";
 import { BackendError } from "./backend-error.js";
 import { validOrderRecord, orderReceipt, publicOrder } from "./order-record.js";
 
@@ -7,8 +8,8 @@ export const ORDER_BLOB_PREFIX = "date-shopping/orders/v1/";
 const orderPath = new RegExp(`^${ORDER_BLOB_PREFIX}[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\\.json$`);
 
 // The SDK and token are injected by a server-only module; neither reaches the client.
-export function createOrderBlobStore({ put, get, list }, token) {
-  if (!token) throw new BackendError("Der Bestellspeicher ist noch nicht eingerichtet. Bitte versuche es später erneut.");
+export function createOrderBlobStore({ put, get, list }, token, friendbookStore = null) {
+  if (typeof token !== "string" || !token.trim()) throw new BackendError("Der Bestellspeicher ist noch nicht eingerichtet: BLOB_READ_WRITE_TOKEN fehlt. Bitte verbinde den vorhandenen privaten Blob Store mit dem Vercel-Projekt und prüfe die Umgebungsvariable.");
 
   async function read(pathname) {
     try {
@@ -31,13 +32,20 @@ export function createOrderBlobStore({ put, get, list }, token) {
   return {
     async create(input) {
       const validated = validateOrder(input);
+      if (friendbookStore) {
+        const entry = await friendbookStore.resolve(validated.friendbook);
+        if (entry.location !== validated.location || (entry.date && (entry.date !== validated.date || entry.time !== validated.time))) throw new BackendError("Standort oder Termin stimmen nicht mit deinem Freundesbuch überein. Bitte bestätige deinen Eintrag erneut.",400);
+      }
       const canonical = { date: validated.date, time: validated.time, location: validated.location,
+        ...(validated.friendbook ? {friendbook:validated.friendbook} : {}),
         entries: validated.items.map(({ id, variantId }) => variantId ? { id, variantId } : { id }).sort((a, b) => a.id.localeCompare(b.id)) };
       const requestHash = createHash("sha256").update(JSON.stringify(canonical)).digest("hex");
       const pathname = `${ORDER_BLOB_PREFIX}${validated.idempotencyKey}.json`;
       const existing = await read(pathname);
       if (existing) return replay(existing, requestHash);
-      const order = { ...validated, id: randomUUID(), requestHash, created_at: new Date().toISOString(), status: "completed" };
+      const {friendbook: reference, ...snapshot} = validated;
+      const order = { ...snapshot,
+        ...(reference ? {friendbookId:reference.id,items:validated.items.map(item => ({...item,category:productsById[item.id].category}))} : {}), id: randomUUID(), requestHash, created_at: new Date().toISOString(), status: "completed" };
       try {
         await put(pathname, JSON.stringify(order, null, 2), {
           access: "private", token, contentType: "application/json", addRandomSuffix: false,

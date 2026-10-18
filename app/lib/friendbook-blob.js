@@ -2,14 +2,14 @@ import { createHash, randomUUID } from "node:crypto";
 import { validateEntry, validEntryRecord } from "../friendbook/lib/validation.js";
 import { questions } from "../friendbook/lib/content.js";
 import { BackendError } from "./backend-error.js";
-const entryReceipt = ({id,created_at,status}) => ({id,created_at,status});
+const entryReceipt = ({id,idempotencyKey,created_at,status}) => ({id,key:idempotencyKey,created_at,status});
 
 export const FRIENDBOOK_BLOB_PREFIX = "friendbook/v1/";
 const entryPath = new RegExp(`^${FRIENDBOOK_BLOB_PREFIX}[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\\.json$`);
 
 // The SDK and token are injected by a server-only module; neither reaches the client.
 export function createFriendbookBlobStore({ put, get, list }, token) {
-  if (!token) throw new BackendError("Der Freundesbuch-Speicher ist noch nicht eingerichtet. Bitte versuche es später erneut.");
+  if (typeof token !== "string" || !token.trim()) throw new BackendError("Der Freundesbuch-Speicher ist noch nicht eingerichtet: BLOB_READ_WRITE_TOKEN fehlt. Bitte verbinde den vorhandenen privaten Blob Store mit dem Vercel-Projekt und prüfe die Umgebungsvariable.");
 
   async function read(pathname) {
     try {
@@ -30,6 +30,12 @@ export function createFriendbookBlobStore({ put, get, list }, token) {
   }
 
   return {
+    async resolve(reference) {
+      if (!reference || typeof reference.key !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(reference.key)) throw new BackendError("Bitte schließe zuerst deinen Freundesbuch-Eintrag ab.",400);
+      const entry = await read(`${FRIENDBOOK_BLOB_PREFIX}${reference.key.toLowerCase()}.json`);
+      if (!entry || entry.id !== reference.id) throw new BackendError("Dein Freundesbuch-Eintrag wurde nicht gefunden. Bitte schließe ihn erneut ab.",400);
+      return entry;
+    },
     async create(input) {
       const validated = validateEntry(input);
       const {idempotencyKey: _key, ...canonical} = validated;

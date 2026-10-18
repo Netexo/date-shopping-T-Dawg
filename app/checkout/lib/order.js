@@ -5,7 +5,7 @@ import { validLocation } from "../../lib/location.js";
 
 export const ORDER_STORAGE_KEY = "date-shopping.checkout.v4";
 
-export function checkoutDraft(appointment, entries, location = appointment?.location) {
+export function checkoutDraft(appointment, entries, location = appointment?.location, friendbook = null) {
   const date = readAppointment(appointment?.date, appointment?.time);
   const cleanEntries = restoreCart(entries);
   const summary = cartSummary(cleanEntries);
@@ -13,7 +13,8 @@ export function checkoutDraft(appointment, entries, location = appointment?.loca
   // Cart order does not affect an order's identity, but restaurant choice does.
   const canonicalEntries = [...cleanEntries].sort((a, b) => a.id.localeCompare(b.id));
   return {
-    signature: JSON.stringify([date.date, date.time, canonicalEntries, location]),
+    signature: JSON.stringify([date.date, date.time, canonicalEntries, location, ...(friendbook ? [friendbook] : [])]),
+    ...(friendbook ? {friendbook} : {}),
     location,
     appointment: date,
     entries: cleanEntries,
@@ -32,7 +33,7 @@ function savedRequests(storage) {
 
 function completedReceipt(receipt, draft) {
   const appointment = readAppointment(receipt?.date, receipt?.time);
-  if (!receipt || receipt.location !== draft.location || receipt.status !== "completed" || !/^[0-9a-f-]{36}$/i.test(receipt.id || "")
+  if (!receipt || (draft.friendbook && receipt.friendbookId !== draft.friendbook.id) || receipt.location !== draft.location || receipt.status !== "completed" || !/^[0-9a-f-]{36}$/i.test(receipt.id || "")
     || !appointment || appointment.date !== draft.appointment.date || appointment.time !== draft.appointment.time
     || !Number.isInteger(receipt.spent) || receipt.spent < 1 || receipt.spent > 100 || receipt.remaining !== 100 - receipt.spent) return null;
   return { ...draft, id: receipt.id, appointment, spent: receipt.spent, remaining: receipt.remaining,
@@ -46,7 +47,7 @@ export function findCompletedOrder(storage, draft) {
 }
 
 export async function completeOrder(storage, draft, send = fetch) {
-  if (!draft || checkoutDraft(draft.appointment, draft.entries, draft.location)?.signature !== draft.signature) throw new Error("Bitte prüfe deine Datum- und Produktauswahl.");
+  if (!draft || checkoutDraft(draft.appointment, draft.entries, draft.location, draft.friendbook)?.signature !== draft.signature) throw new Error("Bitte prüfe deine Datum- und Produktauswahl.");
   const requests = savedRequests(storage);
   let request = requests.find((item) => item.signature === draft.signature);
   if (!request) {
@@ -63,7 +64,7 @@ export async function completeOrder(storage, draft, send = fetch) {
   let response;
   try {
     response = await send("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ location: draft.location, date: draft.appointment.date, time: draft.appointment.time,
+      body: JSON.stringify({ ...(draft.friendbook ? {friendbook:draft.friendbook} : {}), location: draft.location, date: draft.appointment.date, time: draft.appointment.time,
         entries: draft.entries, idempotencyKey: request.idempotencyKey }) });
   } catch { throw new Error("Keine Verbindung zum Server. Bitte versuche es erneut. Deine Bestellkennung bleibt erhalten."); }
   const data = await response.json().catch(() => ({}));

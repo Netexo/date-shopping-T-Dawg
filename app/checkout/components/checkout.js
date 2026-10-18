@@ -9,6 +9,8 @@ import { checkoutDraft, completeOrder, findCompletedOrder } from "../lib/order";
 
 import { loadLocation } from "../../lib/location";
 
+import { loadEntryReference } from "../../friendbook/lib/submission";
+
 const initialStatus = { signature: null, ready: false, order: null, error: "", submitting: false };
 
 export default function Checkout() {
@@ -16,11 +18,12 @@ export default function Checkout() {
   const appointment = readAppointment(params.get("date"), params.get("time"));
   const cart = useCart();
   const entries = cart.items.map(({ id, variantId }) => variantId ? { id, variantId } : { id });
+  const [friendbook,setFriendbook] = useReducer((_,value) => value,null);
   const [location, setLocation] = useReducer((_, value) => value, "");
   useEffect(() => {
-    try { setLocation(loadLocation(localStorage)); } catch { /* Show the location selection link below. */ }
+    try { setLocation(loadLocation(localStorage)); setFriendbook(loadEntryReference(localStorage)); } catch { /* Show the location selection link below. */ }
   }, []);
-  const draft = checkoutDraft(appointment, entries, location);
+  const draft = checkoutDraft(appointment, entries, location, friendbook);
   const signature = draft?.signature || null;
   const [status, updateStatus] = useReducer((state, patch) => ({ ...state, ...patch }), initialStatus);
   const submittingRef = useRef(false);
@@ -31,7 +34,7 @@ export default function Checkout() {
     if (!cart.ready) return;
     try {
       const savedSelection = signature ? JSON.parse(signature) : null;
-      const currentDraft = savedSelection ? checkoutDraft({ date: savedSelection[0], time: savedSelection[1] }, savedSelection[2], savedSelection[3]) : null;
+      const currentDraft = savedSelection ? checkoutDraft({ date: savedSelection[0], time: savedSelection[1] }, savedSelection[2], savedSelection[3], savedSelection[4]) : null;
       const order = findCompletedOrder(localStorage, currentDraft);
       updateStatus({ signature, ready: true, order, error: "" });
     } catch {
@@ -44,7 +47,7 @@ export default function Checkout() {
   }, [status.order]);
 
   async function finish() {
-    if (!draft || !cart.ready || !status.ready || status.signature !== signature || status.order || submittingRef.current) return;
+    if (!friendbook || !draft || !cart.ready || !status.ready || status.signature !== signature || status.order || submittingRef.current) return;
     submittingRef.current = true;
     updateStatus({ submitting: true, error: "" });
     try {
@@ -85,8 +88,9 @@ export default function Checkout() {
               <h2 id="order-title">Order Summary</h2>
               <dl className="checkout-totals"><div><dt>Ausgegebene Credits</dt><dd data-testid="checkout-spent">{cart.spent}</dd></div><div><dt>Verbleibendes Guthaben</dt><dd data-testid="checkout-remaining">{cart.remaining} Credits</dd></div></dl>
             </section>
+            {!friendbook && <p className="checkout-missing">Bitte <Link href={appointment ? {pathname:"/friendbook/create",query:{date:appointment.date,time:appointment.time}} : "/friendbook/create"}>schließe zuerst deinen Freundesbuch-Eintrag ab</Link>, damit deine Bestellung zugeordnet werden kann.</p>}
             {status.error && <p className="checkout-error" role="alert">{status.error}</p>}
-            <button type="button" className="checkout-finish" disabled={!draft || status.submitting} onClick={finish}>{status.submitting ? "WIRD GESPEICHERT …" : "EINKAUF ABSCHLIESSEN"}</button>
+            <button type="button" className="checkout-finish" disabled={!friendbook || !draft || status.submitting} onClick={finish}>{status.submitting ? "WIRD GESPEICHERT …" : "EINKAUF ABSCHLIESSEN"}</button>
             <Link className="checkout-back" href={shopHref}>BACK TO SHOP</Link>
           </>
         )}

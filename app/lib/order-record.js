@@ -5,6 +5,7 @@ import { validLocation } from "./location.js";
 export function validOrderRecord(order) {
   if (!order || typeof order.id !== "string" || typeof order.idempotencyKey !== "string"
     || typeof order.requestHash !== "string" || order.status !== "completed"
+    || (order.friendbookId !== undefined && (typeof order.friendbookId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(order.friendbookId)))
     || (order.location !== undefined && !validLocation(order.location))
     || !parseAppointment(order.date, order.time) || !Number.isFinite(Date.parse(order.created_at))
     || !Number.isInteger(order.spent) || order.spent < 1 || order.spent > 100 || order.remaining !== 100 - order.spent
@@ -18,10 +19,10 @@ export function validOrderRecord(order) {
   }) && order.items.reduce((total, item) => total + item.credits, 0) === order.spent;
 }
 
-export function publicOrder({ id, date, time, items, spent, remaining, created_at, status, location }) {
-  return { id, date, time, items, spent, remaining, created_at, status, ...(location ? { location } : {}) };
+export function publicOrder({ id, date, time, items, spent, remaining, created_at, status, location, friendbookId }) {
+  return { id, date, time, items, spent, remaining, created_at, status, ...(location ? { location } : {}), ...(friendbookId ? {friendbookId} : {}) };
 }
 
-export function orderReceipt({ id, date, time, spent, remaining, created_at, status, location }) {
-  return { id, date, time, spent, remaining, created_at, status, ...(location ? { location } : {}) };
+export function orderReceipt({ id, date, time, spent, remaining, created_at, status, location, friendbookId }) {
+  return { id, date, time, spent, remaining, created_at, status, ...(location ? { location } : {}), ...(friendbookId ? {friendbookId} : {}) };
 }
