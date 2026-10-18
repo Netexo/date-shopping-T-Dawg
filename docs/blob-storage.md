@@ -10,8 +10,8 @@ vorhandenen privaten Store `t-dawg-blob-v2` gehören.
 - Den bestehenden Store `t-dawg-blob-v2` unter Storage mit `t-dawg` verbinden.
 - `BLOB_READ_WRITE_TOKEN` für Production sowie gegebenenfalls Preview freigeben.
   Keine Variable mit `NEXT_PUBLIC_` anlegen. Keine Tokens ins Repository schreiben.
-- `ADMIN_PASSWORD` mit mindestens 16 Zeichen verwenden.
-- Bei HTTPS `ADMIN_COOKIE_SECURE=true` setzen.
+- Admin-Zugriff über GitHub OAuth einrichten, siehe `admin-access.md`.
+- `ADMIN_AUTH_ORIGIN` auf die feste HTTPS-Adresse setzen; Cookies werden dann sicher übertragen.
 - Neue Einstellungen wirken bei einem späteren Deployment. Dieses Dokument und
   die lokale Prüfung veröffentlichen nichts automatisch.
 
