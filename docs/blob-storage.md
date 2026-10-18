@@ -10,8 +10,6 @@ vorhandenen privaten Store `t-dawg-blob-v2` gehören.
 - Den bestehenden Store `t-dawg-blob-v2` unter Storage mit `t-dawg` verbinden.
 - `BLOB_READ_WRITE_TOKEN` für Production sowie gegebenenfalls Preview freigeben.
   Keine Variable mit `NEXT_PUBLIC_` anlegen. Keine Tokens ins Repository schreiben.
-- Admin-Zugriff über GitHub OAuth einrichten, siehe `admin-access.md`.
-- `ADMIN_AUTH_ORIGIN` auf die feste HTTPS-Adresse setzen; Cookies werden dann sicher übertragen.
 - Neue Einstellungen wirken bei einem späteren Deployment. Dieses Dokument und
   die lokale Prüfung veröffentlichen nichts automatisch.
 
@@ -33,10 +31,9 @@ Beide Speicherwege verwenden feste Dateinamen pro Idempotenzkennung sowie
 Wiederholungsversuche verwenden dieselbe Kennung. Bestehende Dateien werden
 weder gelöscht noch überschrieben.
 
-`GET /api/friendbook` und `GET /api/orders` verlangen die vorhandene serverseitig
-geprüfte Admin-Sitzung. Im Admin erscheinen beide Bereiche, neueste Einträge
-zuerst; Freundesbücher ohne Bestellung bleiben sichtbar. Alte Bestellungen ohne
-Zuordnung bleiben im Bestellbereich lesbar.
+Der Admin-Bereich und die zugehörigen GET-Abfragen wurden entfernt.
+Die API-Routen bieten nur noch das Speichern per POST an; gespeicherte Dateien
+werden nicht über eine öffentliche Listen-API ausgegeben.
 
 Die dauerhaften Daten liegen im Blob Store, nicht im Dateisystem einer Function.
 Neue Serverinstanzen lesen denselben Store erneut. Bei einem Store-Wechsel
@@ -45,7 +42,7 @@ werden Dateien aus dem alten Store nicht automatisch migriert oder gelöscht.
 ## Prüfung und Grenzen
 
 Die Tests simulieren die privaten SDK-Aufrufe und prüfen Speicherung, Fehler,
-parallele Wiederholungen, Zuordnung, Preise, Admin-Daten und neue Serverinstanzen.
+parallele Wiederholungen, Zuordnung, Preise und neue Serverinstanzen.
 Ein Test gegen den echten Store erfordert dessen serverseitigen Token. Ohne
 lokal verfügbaren Token ist kein echter Lese-/Schreibtest durchgeführt.
 

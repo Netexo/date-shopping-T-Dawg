@@ -121,9 +121,8 @@ test("client retries reuse the persisted key and only acknowledge server success
   assert.equal((await submitEntry(storage,payload,() => {throw new Error("must not resend");})).id,receipt.id);
 });
 
-test("linked checkout persists one order, server prices, and complete admin details", async () => {
+test("linked checkout persists one order, server prices, and complete stored details", async () => {
   const {createOrderBlobStore} = await import("../app/lib/order-blob.js");
-  const {entryOverview} = await import("../app/lib/entry-overview.js");
   const {loadEntryReference} = await import("../app/friendbook/lib/submission.js");
   const {checkoutDraft,completeOrder} = await import("../app/checkout/lib/order.js");
   const f = fixture(); const friendbooks = f.store();
@@ -134,14 +133,12 @@ test("linked checkout persists one order, server prices, and complete admin deta
   const receipt = await submitEntry(storage,payload,async (_,options) => Response.json({receipt:await friendbooks.create(JSON.parse(options.body))}));
   const reference = loadEntryReference(storage);
   assert.deepEqual(reference,{id:receipt.id,key:receipt.key});
-  const pending = await entryOverview(friendbooks,orders);
-  assert.equal(pending.entries[0].progress,"Freundesbuch abgeschlossen");
+  assert.equal((await friendbooks.list()).entries[0].status,"completed");
+  assert.equal((await orders.list()).orders.length,0);
   const draft = checkoutDraft(data,[{id:"henna-tattoo"},{id:"restaurant",variantId:"asian"},{id:"jojo"}],data.location,reference);
   const send = async (_,options) => Response.json({receipt:await orders.create(JSON.parse(options.body))});
   await Promise.all([completeOrder(storage,draft,send),completeOrder(storage,draft,send)]);
-  const overview = await entryOverview(friendbooks,orders);
-  const entry = overview.entries[0];
-  assert.equal(entry.progress,"Bestellung abgeschlossen");
+  const entry = {orders:(await orders.list()).orders};
   assert.equal(entry.orders.length,1);
   assert.equal(entry.orders[0].friendbookId,receipt.id);
   assert.equal(entry.orders[0].spent,60);
@@ -165,7 +162,6 @@ test("checkout rejects missing, forged and mismatched friendbook references befo
 
 test("new server instances can reload and join persisted friendbooks and orders", async () => {
   const {createOrderBlobStore} = await import("../app/lib/order-blob.js");
-  const {entryOverview} = await import("../app/lib/entry-overview.js");
   const f = fixture();
   const payload = input();
   const firstFriendbooks = f.store();
@@ -178,11 +174,12 @@ test("new server instances can reload and join persisted friendbooks and orders"
   const orderReceipt = await firstOrders.create(orderInput);
   const restartedFriendbooks = createFriendbookBlobStore(f.api,token);
   const restartedOrders = createOrderBlobStore(f.api,token,restartedFriendbooks);
-  const overview = await entryOverview(restartedFriendbooks,restartedOrders);
-  assert.equal(overview.entries[0].id,receipt.id);
-  assert.equal(overview.entries[0].orders[0].id,orderReceipt.id);
-  assert.equal(overview.entries[0].orders[0].spent,40);
-  assert.equal(overview.entries[0].progress,"Bestellung abgeschlossen");
+  const entry = (await restartedFriendbooks.list()).entries[0];
+  const savedOrder = (await restartedOrders.list()).orders[0];
+  assert.equal(entry.id,receipt.id);
+  assert.equal(savedOrder.friendbookId,entry.id);
+  assert.equal(savedOrder.id,orderReceipt.id);
+  assert.equal(savedOrder.spent,40);
   assert.equal((await restartedOrders.create(orderInput)).id,orderReceipt.id);
   assert.equal(f.files.size,2);
 });
